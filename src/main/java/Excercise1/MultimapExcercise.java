@@ -6,14 +6,18 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javafx.util.Pair;
 
@@ -23,20 +27,32 @@ public class MultimapExcercise
         throws IOException, URISyntaxException, IllegalAccessException, NoSuchFieldException
     {
         //HashMap<Integer, Set<String>> map = firstWay();
-        HashMap<Integer, Set<String>> map = fillLambda();
+        HashMap<Integer, Set<String>> map = fillNewJava();
 
         for (int key : map.keySet())
         {
-            System.out.print("Key: " + key + "  Value: ");
-            String value = "";
-            //value = getValue(map.get(key));
-            value += " InitialCapacity: ";
-            value += getInitialCapacityFromSet(map);
-            System.out.println(value);
+            System.out.print("Key: " + key );
+            System.out.print("  InitialCapacity: " + getInitialCapacityFromSet(map));
+            System.out.print("   Value: " + getValue(map.get(key)));
+            System.out.println();
         }
 
         return map;
     }
+
+    public static HashMap fillNewJava() throws IOException, URISyntaxException
+    {
+        List<Model> list = new BufferedReader(new FileReader(getInitFile())).lines().map(s -> new Model(s)).collect(
+            Collectors.toList());
+
+        Map<Integer, Set<String>> map = list
+            .stream()
+            .collect(Collectors.groupingBy(Model::getKey,
+                                           Collectors.mapping(Model::getValue, Collectors.toSet())));
+        return new HashMap<>(map);
+    }
+
+
 
     private static HashMap<Integer, Set<String>> firstWay() throws IOException, URISyntaxException
     {
@@ -63,65 +79,6 @@ public class MultimapExcercise
     }
 
 
-
-    public static HashMap fillMethodReference() throws IOException, URISyntaxException
-    {
-        HashMap<Integer, Set<String>> map = new HashMap<Integer, Set<String>>();
-
-        BufferedReader br = new BufferedReader(new FileReader(getInitFile()));
-        br.lines().forEach(MultimapExcercise::putInMap(br.readLine()), map);
-
-        return map;
-    }
-
-
-    public static HashMap fillLambda() throws IOException, URISyntaxException
-    {
-        HashMap<Integer, Set<String>> map = new HashMap<Integer, Set<String>>();
-
-        BufferedReader br = new BufferedReader(new FileReader(getInitFile()));
-        BiConsumer<HashMap<Integer, Set<String>> fillMap = (string, map) -> putInMap(string, map);
-
-        return map;
-    }
-
-    public static HashMap putInMap(String string, HashMap<Integer, Set<String>> map){
-        HashSet<String> set = (HashSet) map.get(getKey(string));
-        set.add(getValue(string));
-        map.put(getKey(string), set);
-        return map;
-    }
-
-    public static int getKey(String line){
-        String[] result = line.split(",");
-        return Integer.parseInt(result[0]);
-    }
-
-    public static String getValue(String line){
-        String[] result = line.split(",");
-        return result[1];
-    }
-
-    public static HashMap<Integer, Set<String>> some(String line, HashMap<Integer, Set<String>> map)
-    {
-        String[] result = line.split(",");
-        Integer key = Integer.parseInt(result[0]);
-        String value = result[1];
-
-        if (map.containsKey(key))
-        {
-            Set set = map.get(key);
-            set.add(result[1]);
-            map.put(key, set);
-        }
-        else
-        {
-            Set set = new HashSet();
-            set.add(value);
-        }
-        return map;
-    }
-
     private static String getValue(Set<String> key)
     {
         boolean split = true;
@@ -139,6 +96,7 @@ public class MultimapExcercise
             }
 
         }
+        value = String.format("%5s",value);
         return value;
     }
 
@@ -158,7 +116,7 @@ public class MultimapExcercise
     {
         String path =
             Paths.get(MultimapExcercise.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
-        File file = new File(path + "\\text.csv");
+        File file = new File(path + "\\text.txt");
         return file;
     }
 
